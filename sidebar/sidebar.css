@@ -1,0 +1,172 @@
+/* Styles for the content INSIDE the sidebar iframe */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+#sidebar-container {
+    padding: 15px;
+    height: 100vh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+h1 {
+    font-size: 1.2em;
+    color: #1a73e8;
+    border-bottom: 2px solid #1a73e8;
+    padding-bottom: 10px;
+    margin-top: 0;
+}
+
+#content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+/* General Layout */
+.hidden {
+    display: none !important;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+h2 {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+/* Buttons */
+button {
+    background: #1a73e8;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+button:hover {
+    background: #155ab3;
+}
+
+#settings-btn, #back-btn, #history-btn, #back-from-history-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #555;
+    padding: 0;
+}
+
+#settings-btn:hover, #back-btn:hover, #history-btn:hover, #back-from-history-btn:hover {
+    color: #000;
+}
+
+/* History View */
+#history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    height: calc(100vh - 100px); /* Adjust as needed */
+}
+
+.history-item {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+
+.history-item:hover {
+    background-color: #eef;
+}
+
+.history-item-title {
+    font-weight: bold;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Settings View */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.form-group input[type="password"],
+.form-group textarea {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#save-confirm {
+    color: green;
+    text-align: center;
+    font-weight: bold;
+}
+
+#message-container, #loading-container, #error-container {
+    text-align: center;
+    color: #555;
+    padding: 20px;
+    border: 1px dashed #ccc;
+    border-radius: 5px;
+}
+
+#summarize-btn {
+    margin-top: 10px;
+}
+
+#summary-container h3 {
+    color: #1a73e8;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 5px;
+}
+
+#summary-text {
+    line-height: 1.6;
+}
+
+#action-steps-list {
+    padding-left: 20px;
+    line-height: 1.6;
+}
+

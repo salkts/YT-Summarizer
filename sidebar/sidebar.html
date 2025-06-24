@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>YT Summary</title>
+  <link rel="stylesheet" href="sidebar.css">
+</head>
+<body>
+  <div id="sidebar-container">
+    <div id="main-view">
+        <div class="header">
+            <h1>YouTube Summarizer</h1>
+            <div>
+                <button id="history-btn" title="History">&#128337;</button>
+                <button id="settings-btn" title="Settings">&#9881;</button>
+                <button id="close-btn" title="Close">&#10005;</button>
+            </div>
+        </div>
+        <div id="content">
+            <div id="message-container">
+                <p id="message">Ready to summarize!</p>
+                <button id="summarize-btn">Generate Summary</button>
+            </div>
+            <div id="loading-container" class="hidden">
+                <p>Summarizing, please wait...</p>
+            </div>
+            <div id="summary-container" class="hidden">
+                <h3>Summary</h3>
+                <div id="summary-text"></div>
+                <h3>Action Steps</h3>
+                <ul id="action-steps-list"></ul>
+            </div>
+             <div id="error-container" class="hidden">
+                <p id="error-message"></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="history-view" class="hidden">
+        <div class="header">
+            <h2>History</h2>
+            <button id="back-from-history-btn" title="Back to Summary">&#10005;</button>
+        </div>
+        <div id="history-list"></div>
+    </div>
+
+    <div id="settings-view" class="hidden">
+        <div class="header">
+            <h2>Settings</h2>
+            <button id="back-btn" title="Back to Summary">&#10005;</button>
+        </div>
+        <div class="settings-content">
+            <div class="form-group">
+                <label for="api-key">Gemini API Key</label>
+                <input type="password" id="api-key" placeholder="Enter your API Key">
+            </div>
+            <div class="form-group">
+                <label for="system-prompt">System Prompt</label>
+                <textarea id="system-prompt" rows="8"></textarea>
+            </div>
+            <button id="save-settings-btn">Save Settings</button>
+            <p id="save-confirm" class="hidden">Settings saved!</p>
+        </div>
+    </div>
+  </div>
+  <script src="sidebar.js"></script>
+</body>
+</html>

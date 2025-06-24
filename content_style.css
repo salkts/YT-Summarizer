@@ -1,0 +1,25 @@
+#yt-summarizer-sidebar-iframe {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  height: 100%;
+  border: none;
+  z-index: 9999;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+  display: none; /* Initially hidden */
+  background-color: white;
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(100%);
+}
+
+#yt-summarizer-sidebar-iframe.visible {
+    display: block;
+    transform: translateX(0);
+}
+
+/* Pushes the youtube page content to the left */
+body.yt-summarizer-sidebar-open {
+    margin-right: 400px;
+    transition: margin-right 0.3s ease-in-out;
+}
