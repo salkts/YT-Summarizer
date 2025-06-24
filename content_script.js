@@ -31,12 +31,24 @@
     } else if (request.action === "toggleSidebar") {
       toggleSidebar();
       sendResponse({ status: "done" });
+    } else if (request.action === 'closeSidebar') {
+        if (sidebarIframe) {
+            sidebarIframe.classList.remove('visible');
+            document.body.classList.remove('yt-summarizer-sidebar-open');
+        }
+        sendResponse({ status: 'done' });
     } else if (request.action === 'getVideoDetails') {
         const videoId = new URLSearchParams(window.location.search).get('v');
         const videoUrl = window.location.href;
         const videoTitle = document.title;
         sendResponse({ videoId, videoUrl, videoTitle });
         return true; 
+    } else if (request.action === 'seekVideo') {
+        const videoPlayer = document.querySelector('video');
+        if (videoPlayer) {
+            videoPlayer.currentTime = request.time;
+        }
+        sendResponse({ status: 'done' });
     }
   });
 

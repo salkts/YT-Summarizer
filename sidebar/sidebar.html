@@ -6,60 +6,98 @@
 </head>
 <body>
   <div id="sidebar-container">
+    <!-- Main View -->
     <div id="main-view">
-        <div class="header">
-            <h1>YouTube Summarizer</h1>
-            <div>
-                <button id="history-btn" title="History">&#128337;</button>
-                <button id="settings-btn" title="Settings">&#9881;</button>
-                <button id="close-btn" title="Close">&#10005;</button>
+      <div class="header">
+        <h1>Summarizer</h1>
+        <div class="header-actions">
+          <button id="history-btn" class="btn-icon" title="History"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+          <button id="theme-toggle-btn" class="btn-icon" title="Toggle Theme"></button>
+          <button id="settings-btn" class="btn-icon" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+          <button id="close-btn" class="btn-icon" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        </div>
+      </div>
+      <div id="content">
+        <div id="message-container" class="card">
+          <div class="card-content">
+            <p id="message">Ready to summarize the video!</p>
+            <button id="summarize-btn" class="btn btn-primary">Generate Summary</button>
+          </div>
+        </div>
+        <div id="loading-container" class="card hidden">
+          <div class="card-content">
+            <p>Summarizing, please wait...</p>
+          </div>
+        </div>
+        <div id="summary-container" class="card hidden">
+            <div class="card-header">
+                <h2 class="card-title">Summary</h2>
+                <button id="regenerate-btn" class="btn-icon" title="Regenerate Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+            </div>
+            <div class="card-content">
+                <div id="summary-text"></div>
+                <h3 class="card-title" style="margin-top: 1rem;">Action Steps</h3>
+                <ul id="action-steps-list"></ul>
+                <div id="concepts-container" class="hidden">
+                    <h3 class="card-title" style="margin-top: 1rem;">Key Concepts</h3>
+                    <ul id="concepts-list"></ul>
+                </div>
             </div>
         </div>
-        <div id="content">
-            <div id="message-container">
-                <p id="message">Ready to summarize!</p>
-                <button id="summarize-btn">Generate Summary</button>
-            </div>
-            <div id="loading-container" class="hidden">
-                <p>Summarizing, please wait...</p>
-            </div>
-            <div id="summary-container" class="hidden">
-                <h3>Summary</h3>
-                <div id="summary-text"></div>
-                <h3>Action Steps</h3>
-                <ul id="action-steps-list"></ul>
-            </div>
-             <div id="error-container" class="hidden">
+        <div id="error-container" class="card hidden">
+            <div class="card-content">
                 <p id="error-message"></p>
             </div>
         </div>
+      </div>
     </div>
 
+    <!-- History View -->
     <div id="history-view" class="hidden">
-        <div class="header">
-            <h2>History</h2>
-            <button id="back-from-history-btn" title="Back to Summary">&#10005;</button>
-        </div>
-        <div id="history-list"></div>
+      <div class="header">
+        <h2>History</h2>
+        <button id="back-from-history-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div id="history-list"></div>
     </div>
 
+    <!-- Settings View -->
     <div id="settings-view" class="hidden">
-        <div class="header">
-            <h2>Settings</h2>
-            <button id="back-btn" title="Back to Summary">&#10005;</button>
-        </div>
-        <div class="settings-content">
+      <div class="header">
+        <h2>Settings</h2>
+        <button id="back-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <div class="settings-content">
+        <div class="card">
+          <div class="card-content">
             <div class="form-group">
-                <label for="api-key">Gemini API Key</label>
-                <input type="password" id="api-key" placeholder="Enter your API Key">
+              <label for="api-key">Gemini API Key</label>
+              <input type="password" id="api-key" class="form-input" placeholder="Enter your API Key">
             </div>
-            <div class="form-group">
-                <label for="system-prompt">System Prompt</label>
-                <textarea id="system-prompt" rows="8"></textarea>
-            </div>
-            <button id="save-settings-btn">Save Settings</button>
-            <p id="save-confirm" class="hidden">Settings saved!</p>
+          </div>
         </div>
+        <div class="card">
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="system-prompt">System Prompt</label>
+                    <textarea id="system-prompt" class="form-textarea"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Appearance</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label for="theme-switcher">Theme</label>
+                    <button id="theme-switcher" class="btn btn-secondary">Toggle Theme</button>
+                </div>
+            </div>
+        </div>
+        <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
+        <p id="save-confirm" class="hidden">Settings saved!</p>
+      </div>
     </div>
   </div>
   <script src="sidebar.js"></script>

@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
   "host_permissions": [
     "https://*.youtube.com/*"
@@ -27,6 +28,7 @@
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
+
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; connect-src https://generativelanguage.googleapis.com"
   },
