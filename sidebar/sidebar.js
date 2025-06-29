@@ -2,46 +2,54 @@
 
 // Caching DOM elements
 const elements = {
-    // Views
+    sidebar: document.getElementById('sidebar-container'),
     mainView: document.getElementById('main-view'),
+    historyView: document.getElementById('history-view'),  
     settingsView: document.getElementById('settings-view'),
-    historyView: document.getElementById('history-view'),
-    // Main view elements
-    content: document.getElementById('content'),
     messageContainer: document.getElementById('message-container'),
     loadingContainer: document.getElementById('loading-container'),
     summaryContainer: document.getElementById('summary-container'),
     errorContainer: document.getElementById('error-container'),
+    historyBanner: document.getElementById('history-banner'),
+    
     message: document.getElementById('message'),
     summaryText: document.getElementById('summary-text'),
+    videoDuration: document.getElementById('video-duration'),
     actionStepsList: document.getElementById('action-steps-list'),
-    conceptsContainer: document.getElementById('concepts-container'),
     conceptsList: document.getElementById('concepts-list'),
+    conceptsContainer: document.getElementById('concepts-container'),
     errorMessage: document.getElementById('error-message'),
-    // Settings elements
+    historyList: document.getElementById('history-list'),
+    
     apiKeyInput: document.getElementById('api-key'),
     systemPromptInput: document.getElementById('system-prompt'),
     saveConfirm: document.getElementById('save-confirm'),
-    // History elements
-    historyList: document.getElementById('history-list'),
+    timeSavedText: document.getElementById('time-saved-text'),
+    statsTimeSaved: document.getElementById('stats-time-saved'),
+    statsVideosCount: document.getElementById('stats-videos-count')
 };
 
 const buttons = {
     summarize: document.getElementById('summarize-btn'),
+    summarizeCurrent: document.getElementById('summarize-current-btn'),
     regenerate: document.getElementById('regenerate-btn'),
-    settings: document.getElementById('settings-btn'),
-    backFromSettings: document.getElementById('back-btn'),
-    saveSettings: document.getElementById('save-settings-btn'),
+    retry: document.getElementById('retry-btn'),
     history: document.getElementById('history-btn'),
-    backFromHistory: document.getElementById('back-from-history-btn'),
+    settings: document.getElementById('settings-btn'),
     close: document.getElementById('close-btn'),
-    themeSwitcher: document.getElementById('theme-switcher'),
-    themeToggle: document.getElementById('theme-toggle-btn'),
+    back: document.getElementById('back-btn'),
+    backFromHistory: document.getElementById('back-from-history-btn'),
+    saveSettings: document.getElementById('save-settings-btn'),
+    themeToggle: document.getElementById('theme-toggle-btn')
 };
 
-let currentVideoId = null;
-let currentVideoTitle = null;
+// Track both the actual current video and the displayed video (for history viewing)
+let actualCurrentVideoId = null;
+let actualCurrentVideoTitle = null;
+let displayedVideoId = null;
+let displayedVideoTitle = null;
 let currentTheme = 'dark'; // Default theme is dark
+let isViewingHistory = false;
 
 // --- View Management ---
 function showView(view) {
@@ -76,19 +84,67 @@ async function toggleTheme() {
     });
 }
 
-// --- UI Rendering ---
-function renderSummary(data) {
-    if (!data || !data.summary) {
-        showError('Received empty or invalid summary data.');
-        return;
+// --- Time Saved Management ---
+async function updateTimeSavedDisplay() {
+    const response = await chrome.runtime.sendMessage({ action: 'getTimeSaved' });
+    if (response) {
+        const formattedTime = formatDuration(response.timeSaved);
+        elements.timeSavedText.textContent = `Time saved: ${formattedTime}`;
+        
+        if (elements.statsTimeSaved) {
+            elements.statsTimeSaved.textContent = formattedTime;
+        }
+        if (elements.statsVideosCount) {
+            elements.statsVideosCount.textContent = response.videosSummarized.toString();
+        }
     }
+}
 
+function formatDuration(seconds) {
+    if (!seconds || seconds === 0) return '0m';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+}
+
+// --- Video Management ---
+function updateMessageForCurrentVideo() {
+    if (isViewingHistory && actualCurrentVideoId !== displayedVideoId) {
+        elements.message.textContent = `Viewing history. Click to summarize current video.`;
+    } else {
+        elements.message.textContent = `Ready to summarize the video!`;
+    }
+}
+
+function resetToCurrentVideo() {
+    isViewingHistory = false;
+    displayedVideoId = actualCurrentVideoId;
+    displayedVideoTitle = actualCurrentVideoTitle;
+    updateMessageForCurrentVideo();
+}
+
+// --- UI Rendering ---
+function renderSummary(data, isFromHistory = false) {
     const formatText = (text) => {
         const escapedText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         return escapedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
     };
 
     elements.summaryText.innerHTML = formatText(data.summary);
+
+    // Display video duration if available
+    if (data.formattedDuration) {
+        elements.videoDuration.textContent = data.formattedDuration;
+        elements.videoDuration.style.display = 'inline';
+    } else {
+        elements.videoDuration.style.display = 'none';
+    }
 
     elements.actionStepsList.innerHTML = '';
     if (data.action_steps && data.action_steps.length > 0) {
@@ -133,11 +189,22 @@ function renderSummary(data) {
         elements.conceptsContainer.classList.add('hidden');
     }
 
+    // Show/hide history banner
+    if (isViewingHistory && actualCurrentVideoId !== displayedVideoId) {
+        elements.historyBanner.classList.remove('hidden');
+    } else {
+        elements.historyBanner.classList.add('hidden');
+    }
+
     elements.messageContainer.classList.add('hidden');
     elements.loadingContainer.classList.add('hidden');
     elements.summaryContainer.classList.remove('hidden');
     elements.errorContainer.classList.add('hidden');
 
+    // Update time saved display after successful summary (only if not from history)
+    if (!isFromHistory) {
+        updateTimeSavedDisplay();
+    }
 }
 
 function renderHistory(history) {
@@ -148,10 +215,14 @@ function renderHistory(history) {
             div.className = 'history-item';
             div.innerHTML = `<p class="history-item-title">${item.title}</p>`;
             div.addEventListener('click', () => {
-                currentVideoId = item.videoId;
-                currentVideoTitle = item.title;
-                renderSummary(item.summary);
+                // Set the displayed video to the history item but keep track of actual current video
+                displayedVideoId = item.videoId;
+                displayedVideoTitle = item.title;
+                isViewingHistory = actualCurrentVideoId !== item.videoId;
+                
+                renderSummary(item.summary, true);
                 showView(elements.mainView);
+                updateMessageForCurrentVideo();
             });
             elements.historyList.appendChild(div);
         });
@@ -168,12 +239,32 @@ function showError(message) {
     elements.messageContainer.classList.add('hidden');
 }
 
-// --- Event Handlers ---
-async function handleSummarize() {
+function showLoading() {
     elements.messageContainer.classList.add('hidden');
     elements.summaryContainer.classList.add('hidden');
     elements.errorContainer.classList.add('hidden');
     elements.loadingContainer.classList.remove('hidden');
+}
+
+function resetToMessage() {
+    elements.summaryContainer.classList.add('hidden');
+    elements.errorContainer.classList.add('hidden');
+    elements.loadingContainer.classList.add('hidden');  
+    elements.messageContainer.classList.remove('hidden');
+    updateMessageForCurrentVideo();
+}
+
+// --- Event Handlers ---
+async function handleSummarize() {
+    // Always use the actual current video for generating new summaries
+    resetToCurrentVideo();
+    
+    showLoading();
+
+    // Disable buttons during processing
+    buttons.summarize.disabled = true;
+    buttons.summarizeCurrent.disabled = true;
+    buttons.regenerate.disabled = true;
 
     try {
         const settings = await getSettings();
@@ -183,8 +274,8 @@ async function handleSummarize() {
         }
 
         const videoDetails = {
-            videoId: currentVideoId,
-            title: currentVideoTitle,
+            videoId: actualCurrentVideoId,
+            title: actualCurrentVideoTitle,
         };
 
         const response = await chrome.runtime.sendMessage({
@@ -196,18 +287,23 @@ async function handleSummarize() {
         if (response.error) {
             showError(response.error);
         } else {
-            renderSummary(response);
+            renderSummary(response, false);
             // Save to history
             chrome.runtime.sendMessage({
                 action: 'saveToHistory',
-                videoId: currentVideoId,
-                title: currentVideoTitle,
+                videoId: actualCurrentVideoId,
+                title: actualCurrentVideoTitle,
                 data: response
             });
         }
     } catch (e) {
-        showError('An unexpected error occurred.');
+        showError('An unexpected error occurred. Please try again.');
         console.error(e);
+    } finally {
+        // Re-enable buttons
+        buttons.summarize.disabled = false;
+        buttons.summarizeCurrent.disabled = false;
+        buttons.regenerate.disabled = false;
     }
 }
 
@@ -220,6 +316,9 @@ async function handleSaveSettings() {
     await chrome.runtime.sendMessage({ action: 'saveSettings', settings });
     elements.saveConfirm.classList.remove('hidden');
     setTimeout(() => elements.saveConfirm.classList.add('hidden'), 2000);
+    
+    // Update statistics display
+    updateTimeSavedDisplay();
 }
 
 // --- Helper Functions ---
@@ -239,54 +338,77 @@ function parseTimestamp(timestamp) {
     return 0;
 }
 
-// --- Initialization ---
-async function initialize() {
-    buttons.summarize.addEventListener('click', handleSummarize);
-    buttons.regenerate.addEventListener('click', handleSummarize);
-    buttons.settings.addEventListener('click', () => showView(elements.settingsView));
-    buttons.backFromSettings.addEventListener('click', () => showView(elements.mainView));
-    buttons.saveSettings.addEventListener('click', handleSaveSettings);
-    buttons.history.addEventListener('click', () => showView(elements.historyView));
-    buttons.backFromHistory.addEventListener('click', () => showView(elements.mainView));
-    buttons.close.addEventListener('click', () => {
-        chrome.runtime.sendMessage({ action: 'closeSidebar' });
-    });
-    buttons.themeSwitcher.addEventListener('click', toggleTheme);
-    buttons.themeToggle.addEventListener('click', toggleTheme);
-
+async function loadSettings() {
     const settings = await getSettings();
     elements.apiKeyInput.value = settings.apiKey || '';
     elements.systemPromptInput.value = settings.systemPrompt || '';
-    applyTheme(settings.theme || 'dark');
+}
 
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0] && tabs[0].url && tabs[0].url.includes("youtube.com/watch")) {
-            const url = new URL(tabs[0].url);
-            currentVideoId = url.searchParams.get('v');
-            currentVideoTitle = tabs[0].title.replace(' - YouTube', '');
+// --- Initialization ---
+async function initialize() {
+    buttons.summarize.addEventListener('click', handleSummarize);
+    buttons.summarizeCurrent.addEventListener('click', handleSummarize);
+    buttons.regenerate.addEventListener('click', handleSummarize);
+    buttons.retry.addEventListener('click', handleSummarize);
+    buttons.close.addEventListener('click', () => {
+        chrome.runtime.sendMessage({ action: 'closeSidebar' });
+    });
+    buttons.themeToggle.addEventListener('click', toggleTheme);
+    buttons.settings.addEventListener('click', () => {
+        showView(elements.settingsView);
+        loadSettings(); // Load current settings when opening
+        updateTimeSavedDisplay(); // Update stats when opening settings
+    });
+    buttons.back.addEventListener('click', () => showView(elements.mainView));
+    buttons.saveSettings.addEventListener('click', handleSaveSettings);
+    buttons.history.addEventListener('click', () => showView(elements.historyView));
+    buttons.backFromHistory.addEventListener('click', () => showView(elements.mainView));
 
-            chrome.runtime.sendMessage({ action: 'getInitialState', videoId: currentVideoId }, (response) => {
-                if (response) {
-                    if (response.summary) renderSummary(response.summary);
-                    renderHistory(response.history);
-                }
-            });
-        } else {
-            showError("Not a YouTube video page.");
+    // Initialize current video tracking
+    chrome.runtime.sendMessage({ action: 'getCurrentVideo' }, (response) => {
+        if (response && response.videoId) {
+            actualCurrentVideoId = response.videoId;
+            actualCurrentVideoTitle = response.title || 'Unknown Title';
+            displayedVideoId = response.videoId;
+            displayedVideoTitle = response.title || 'Unknown Title';
+            isViewingHistory = false;
         }
+    });
+    
+    // Load settings and apply theme
+    const settings = await getSettings();
+    applyTheme(settings.theme || 'light');
+    updateTimeSavedDisplay();
+
+    // Check for cached summary
+    chrome.runtime.sendMessage({ action: 'getCachedSummary' }, (response) => {
+        if (response && response.data) {
+            renderSummary(response.data, false);
+        } else {
+            resetToMessage();
+        }
+    });
+
+    // Load history for display
+    chrome.runtime.sendMessage({ action: 'getHistory' }, (response) => {
+        renderHistory(response || []);
     });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'newVideoLoaded') {
-        currentVideoId = request.videoId;
-        elements.summaryContainer.classList.add('hidden');
-        elements.errorContainer.classList.add('hidden');
-        elements.loadingContainer.classList.add('hidden');
-        elements.messageContainer.classList.remove('hidden');
-        initialize();
+        actualCurrentVideoId = request.videoId;
+        actualCurrentVideoTitle = null; // Will be updated when summary is generated
+        displayedVideoId = actualCurrentVideoId;
+        displayedVideoTitle = actualCurrentVideoTitle;
+        isViewingHistory = false;
+        
+        resetToMessage();
+        // Update time saved display when navigating to new video
+        updateTimeSavedDisplay();
     }
     return true; // Keep message channel open for async responses
 });
 
+// Initialize the sidebar
 initialize();

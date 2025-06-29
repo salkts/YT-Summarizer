@@ -25,6 +25,51 @@
     }
   };
 
+  // Function to get video duration in seconds
+  const getVideoDuration = () => {
+    const videoPlayer = document.querySelector('video');
+    if (videoPlayer && videoPlayer.duration) {
+      return Math.floor(videoPlayer.duration);
+    }
+    
+    // Fallback: try to get duration from the page elements
+    const durationElements = [
+      '.ytp-time-duration',
+      '.ytd-thumbnail-overlay-time-status-renderer',
+      '.ytd-video-primary-info-renderer .ytd-video-view-count-renderer'
+    ];
+    
+    for (const selector of durationElements) {
+      const element = document.querySelector(selector);
+      if (element && element.textContent) {
+        const durationText = element.textContent.trim();
+        const match = durationText.match(/(\d{1,2}:)?(\d{1,2}):(\d{2})/);
+        if (match) {
+          const hours = match[1] ? parseInt(match[1].replace(':', '')) : 0;
+          const minutes = parseInt(match[2]);
+          const seconds = parseInt(match[3]);
+          return hours * 3600 + minutes * 60 + seconds;
+        }
+      }
+    }
+    
+    return null;
+  };
+
+  // Function to format duration as human readable string
+  const formatDuration = (seconds) => {
+    if (!seconds) return null;
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+  };
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "ping") {
       sendResponse({ status: "ready" });
@@ -41,7 +86,16 @@
         const videoId = new URLSearchParams(window.location.search).get('v');
         const videoUrl = window.location.href;
         const videoTitle = document.title;
-        sendResponse({ videoId, videoUrl, videoTitle });
+        const duration = getVideoDuration();
+        const formattedDuration = formatDuration(duration);
+        
+        sendResponse({ 
+          videoId, 
+          videoUrl, 
+          videoTitle, 
+          duration, 
+          formattedDuration 
+        });
         return true; 
     } else if (request.action === 'seekVideo') {
         const videoPlayer = document.querySelector('video');
@@ -55,7 +109,7 @@
   // Listen for YouTube's custom navigation event to reset the sidebar on new video pages.
   document.addEventListener('yt-navigate-finish', () => {
     // Check if the sidebar exists before trying to send a message
-    if (document.getElementById('youtube-summarizer-sidebar')) {
+    if (sidebarIframe) {
         chrome.runtime.sendMessage({ action: 'resetState' });
     }
   });

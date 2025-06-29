@@ -9,12 +9,19 @@
     <!-- Main View -->
     <div id="main-view">
       <div class="header">
-        <h1>Summarizer</h1>
-        <div class="header-actions">
-          <button id="history-btn" class="btn-icon" title="History"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
-          <button id="theme-toggle-btn" class="btn-icon" title="Toggle Theme"></button>
-          <button id="settings-btn" class="btn-icon" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
-          <button id="close-btn" class="btn-icon" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <div class="header-left">
+          <h1>What's the point?</h1>
+        </div>
+        <div class="header-actions-row">
+          <div id="time-saved-container" class="time-saved">
+            <span id="time-saved-text">Time saved: --</span>
+          </div>
+          <div class="header-actions">
+            <button id="history-btn" class="btn-icon" title="History"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg></button>
+            <button id="theme-toggle-btn" class="btn-icon" title="Toggle Theme"></button>
+            <button id="settings-btn" class="btn-icon" title="Settings"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+            <button id="close-btn" class="btn-icon" title="Close"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          </div>
         </div>
       </div>
       <div id="content">
@@ -26,20 +33,35 @@
         </div>
         <div id="loading-container" class="card hidden">
           <div class="card-content">
-            <p>Summarizing, please wait...</p>
+            <div class="loading-spinner"></div>
+            <p>Analyzing video content...</p>
+            <p class="loading-sub">This may take 10-30 seconds for longer videos</p>
           </div>
         </div>
         <div id="summary-container" class="card hidden">
+            <div id="history-banner" class="history-banner hidden">
+                <div class="history-banner-content">
+                    <span class="history-banner-text">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="history-icon"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                        Viewing history
+                    </span>
+                    <button id="summarize-current-btn" class="btn btn-primary btn-small">Summarize Current Video</button>
+                </div>
+            </div>
             <div class="card-header">
                 <h2 class="card-title">Summary</h2>
-                <button id="regenerate-btn" class="btn-icon" title="Regenerate Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                <div class="summary-actions">
+                  <span id="video-duration" class="video-info"></span>
+                  <button id="regenerate-btn" class="btn-icon" title="Regenerate Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
+                </div>
             </div>
             <div class="card-content">
                 <div id="summary-text"></div>
                 <h3 class="card-title" style="margin-top: 1rem;">Action Steps</h3>
                 <ul id="action-steps-list"></ul>
                 <div id="concepts-container" class="hidden">
-                    <h3 class="card-title" style="margin-top: 1rem;">Key Concepts</h3>
+                    <h3 class="card-title" style="margin-top: 1rem;">Key Concepts & Timestamps</h3>
+                    <p class="concepts-subtitle">Click any timestamp to jump to that moment in the video</p>
                     <ul id="concepts-list"></ul>
                 </div>
             </div>
@@ -47,6 +69,7 @@
         <div id="error-container" class="card hidden">
             <div class="card-content">
                 <p id="error-message"></p>
+                <button id="retry-btn" class="btn btn-secondary" style="margin-top: 10px;">Try Again</button>
             </div>
         </div>
       </div>
@@ -55,8 +78,15 @@
     <!-- History View -->
     <div id="history-view" class="hidden">
       <div class="header">
-        <h2>History</h2>
-        <button id="back-from-history-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <div class="header-left">
+          <h2>History</h2>
+        </div>
+        <div class="header-actions-row">
+          <div></div>
+          <div class="header-actions">
+            <button id="back-from-history-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          </div>
+        </div>
       </div>
       <div id="history-list"></div>
     </div>
@@ -64,8 +94,15 @@
     <!-- Settings View -->
     <div id="settings-view" class="hidden">
       <div class="header">
-        <h2>Settings</h2>
-        <button id="back-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+        <div class="header-left">
+          <h2>Settings</h2>
+        </div>
+        <div class="header-actions-row">
+          <div></div>
+          <div class="header-actions">
+            <button id="back-btn" class="btn-icon" title="Back to Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          </div>
+        </div>
       </div>
       <div class="settings-content">
         <div class="card">
@@ -73,6 +110,7 @@
             <div class="form-group">
               <label for="api-key">Gemini API Key</label>
               <input type="password" id="api-key" class="form-input" placeholder="Enter your API Key">
+              <small class="help-text">Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
             </div>
           </div>
         </div>
@@ -80,23 +118,32 @@
             <div class="card-content">
                 <div class="form-group">
                     <label for="system-prompt">System Prompt</label>
-                    <textarea id="system-prompt" class="form-textarea"></textarea>
+                    <textarea id="system-prompt" class="form-textarea" rows="8"></textarea>
+                    <small class="help-text">Customize how the AI analyzes and summarizes videos</small>
                 </div>
             </div>
         </div>
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Appearance</h3>
+                <h3 class="card-title">Statistics</h3>
             </div>
             <div class="card-content">
-                <div class="form-group">
-                    <label for="theme-switcher">Theme</label>
-                    <button id="theme-switcher" class="btn btn-secondary">Toggle Theme</button>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Time Saved</span>
+                        <span id="stats-time-saved" class="stat-value">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Videos Summarized</span>
+                        <span id="stats-videos-count" class="stat-value">--</span>
+                    </div>
                 </div>
             </div>
         </div>
-        <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
-        <p id="save-confirm" class="hidden">Settings saved!</p>
+        <div class="settings-actions">
+          <button id="save-settings-btn" class="btn btn-primary">Save Settings</button>
+          <p id="save-confirm" class="hidden">Settings saved!</p>
+        </div>
       </div>
     </div>
   </div>

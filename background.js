@@ -36,11 +36,14 @@ Respond strictly in JSON format. The JSON object must contain three keys:
 -   If no genuinely actionable, non-promotional steps are present, return an empty array [].
 
 **Timestamped Concepts Requirements ('timestamped_concepts' field):**
--   For **each of the phrases you bolded** in the 'summary' field:
+-   **CRITICAL FOR LONGER VIDEOS:** Ensure timestamps are distributed throughout the ENTIRE video duration, not just the first 10-15 minutes. Pay special attention to concepts discussed in the middle and latter portions of the video.
+-   **Primary Timestamps:** For **each of the phrases you bolded** in the 'summary' field:
     *   Create an object: { "concept": "The exact bolded phrase from summary", "timestamp": "MM:SS" } (or "HH:MM:SS" if the video is long).
     *   The 'timestamp' should point to the primary moment in the video where this concept is discussed or best illustrated.
-    *   If a precise timestamp for a bolded concept cannot be confidently determined from the video, omit that specific concept from this array. Aim for accuracy.
--   This array should contain objects only for the concepts you bolded in the summary.`;
+-   **Additional Key Timestamps:** Beyond the bolded summary phrases, include 3-5 additional important concepts, methods, or insights from throughout the video with their timestamps, especially those from the latter half of longer videos.
+-   **Distribution Requirement:** For videos longer than 20 minutes, ensure at least 30% of your timestamps come from the second half of the video. For videos longer than 40 minutes, ensure timestamps are spread across the beginning, middle, and end thirds.
+-   **Accuracy:** If a precise timestamp for a concept cannot be confidently determined from the video, omit that specific concept from this array. Aim for accuracy over quantity.
+-   **Format:** All timestamps must be in "MM:SS" format for videos under 1 hour, or "HH:MM:SS" format for longer videos.`;
 
 // Function to get data from storage
 function getStorageData(keys) {
@@ -60,6 +63,15 @@ function setStorageData(data) {
     });
 }
 
+// Function to get video details including duration
+async function getVideoDetails(tabId) {
+    return new Promise((resolve) => {
+        chrome.tabs.sendMessage(tabId, { action: 'getVideoDetails' }, (response) => {
+            resolve(response);
+        });
+    });
+}
+
 // Function to fetch the summary from the Gemini API
 async function generateSummary(videoDetails, customSystemPrompt) {
     const { apiKey, systemPrompt: savedSystemPrompt } = await getStorageData(['apiKey', 'systemPrompt']);
@@ -69,12 +81,20 @@ async function generateSummary(videoDetails, customSystemPrompt) {
         return { error: 'API Key not set. Please set it in the settings.' };
     }
 
-    // The new, detailed prompt is now the default
+    // Check if video is longer than 1 hour (3600 seconds)
+    const isLongVideo = videoDetails.duration && videoDetails.duration > 3600;
+    const durationInfo = videoDetails.formattedDuration ? `\n**Video Duration:** ${videoDetails.formattedDuration}` : '';
+    
+    let additionalInstructions = '';
+    if (isLongVideo) {
+        additionalInstructions = '\n\n**LONG VIDEO NOTICE:** This video is longer than 1 hour. Please ensure your timestamps are distributed throughout the entire duration, with special attention to key concepts from the middle and end portions of the video. Include timestamps from at least the final third of the video.';
+    }
+
     const prompt = `
         **Video Title:** ${videoDetails.title}
-        **Video URL:** https://www.youtube.com/watch?v=${videoDetails.videoId}
+        **Video URL:** https://www.youtube.com/watch?v=${videoDetails.videoId}${durationInfo}
 
-        ${finalSystemPrompt}
+        ${finalSystemPrompt}${additionalInstructions}
 
         Process the video content and return the JSON output as specified.
     `;
@@ -108,7 +128,15 @@ async function generateSummary(videoDetails, customSystemPrompt) {
         }
 
         const summaryText = data.candidates[0].content.parts[0].text;
-        return parseSummary(summaryText);
+        const parsed = parseSummary(summaryText);
+        
+        // Add video duration info to the response for time tracking
+        if (parsed && !parsed.error && videoDetails.duration) {
+            parsed.videoDuration = videoDetails.duration;
+            parsed.formattedDuration = videoDetails.formattedDuration;
+        }
+        
+        return parsed;
 
     } catch (error) {
         console.error('Network or other error:', error);
@@ -130,6 +158,18 @@ function parseSummary(summaryText) {
         console.error("Raw summary text:", summaryText);
         return { error: "Failed to parse summary. The AI's response was not valid JSON.", summary: summaryText, action_steps: [], concepts: [] };
     }
+}
+
+// Function to update time saved statistics
+async function updateTimeSaved(videoDuration) {
+    if (!videoDuration) return;
+    
+    const { timeSaved = 0, videosSummarized = 0 } = await getStorageData(['timeSaved', 'videosSummarized']);
+    
+    await setStorageData({
+        timeSaved: timeSaved + videoDuration,
+        videosSummarized: videosSummarized + 1
+    });
 }
 
 // Listener for messages from content scripts or sidebar
@@ -165,8 +205,45 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (tab) {
                 chrome.tabs.sendMessage(tab.id, { action: 'closeSidebar' });
             }
+        } else if (request.action === 'getCurrentVideo') {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && tab.url && tab.url.includes('youtube.com/watch')) {
+                const url = new URL(tab.url);
+                const videoId = url.searchParams.get('v');
+                const title = tab.title.replace(' - YouTube', '');
+                sendResponse({ videoId, title });
+            } else {
+                sendResponse({ error: 'Not on a YouTube video page' });
+            }
+        } else if (request.action === 'getCachedSummary') {
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            if (tab && tab.url && tab.url.includes('youtube.com/watch')) {
+                const url = new URL(tab.url);
+                const videoId = url.searchParams.get('v');
+                const { summaryCache } = await getStorageData(['summaryCache']);
+                const cachedSummary = summaryCache && summaryCache[videoId] ? summaryCache[videoId] : null;
+                sendResponse({ data: cachedSummary });
+            } else {
+                sendResponse({ data: null });
+            }
+        } else if (request.action === 'getHistory') {
+            const { history } = await getStorageData(['history']);
+            sendResponse(history || []);
         } else if (request.action === 'getSummary') {
-            const summary = await generateSummary(request.videoDetails, request.systemPrompt);
+            // Get video details including duration from the content script
+            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+            const videoDetailsWithDuration = await getVideoDetails(tab.id);
+            
+            // Merge with the provided video details
+            const fullVideoDetails = { ...request.videoDetails, ...videoDetailsWithDuration };
+            
+            const summary = await generateSummary(fullVideoDetails, request.systemPrompt);
+            
+            // Update time saved statistics if successful
+            if (summary && !summary.error && fullVideoDetails.duration) {
+                await updateTimeSaved(fullVideoDetails.duration);
+            }
+            
             sendResponse(summary);
         } else if (request.action === 'saveSettings') {
             await setStorageData({
@@ -182,6 +259,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 systemPrompt: systemPrompt || defaultSystemPrompt,
                 theme: theme || 'dark'
             });
+        } else if (request.action === 'getTimeSaved') {
+            const { timeSaved = 0, videosSummarized = 0 } = await getStorageData(['timeSaved', 'videosSummarized']);
+            sendResponse({ timeSaved, videosSummarized });
         } else if (request.action === 'seekVideo') {
             chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
                 if (tabs[0]) {
