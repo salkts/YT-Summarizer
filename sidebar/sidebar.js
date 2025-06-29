@@ -11,6 +11,7 @@ const elements = {
     summaryContainer: document.getElementById('summary-container'),
     errorContainer: document.getElementById('error-container'),
     historyBanner: document.getElementById('history-banner'),
+    confirmationModal: document.getElementById('confirmation-modal'),
     
     message: document.getElementById('message'),
     summaryText: document.getElementById('summary-text'),
@@ -40,7 +41,10 @@ const buttons = {
     back: document.getElementById('back-btn'),
     backFromHistory: document.getElementById('back-from-history-btn'),
     saveSettings: document.getElementById('save-settings-btn'),
-    themeToggle: document.getElementById('theme-toggle-btn')
+    themeToggle: document.getElementById('theme-toggle-btn'),
+    clearHistory: document.getElementById('clear-history-btn'),
+    cancelClear: document.getElementById('cancel-clear-btn'),
+    confirmClear: document.getElementById('confirm-clear-btn')
 };
 
 // Track both the actual current video and the displayed video (for history viewing)
@@ -212,8 +216,11 @@ function renderHistory(history) {
     if (history && history.length > 0) {
         history.forEach(item => {
             const div = document.createElement('div');
-            div.className = 'history-item';
+            const isCurrentVideo = item.videoId === actualCurrentVideoId;
+            div.className = isCurrentVideo ? 'history-item current-video' : 'history-item';
+            
             div.innerHTML = `<p class="history-item-title">${item.title}</p>`;
+            
             div.addEventListener('click', () => {
                 // Set the displayed video to the history item but keep track of actual current video
                 displayedVideoId = item.videoId;
@@ -294,6 +301,11 @@ async function handleSummarize() {
                 videoId: actualCurrentVideoId,
                 title: actualCurrentVideoTitle,
                 data: response
+            }, () => {
+                // Refresh history list after saving so it appears immediately in history tab
+                chrome.runtime.sendMessage({ action: 'getHistory' }, (historyResponse) => {
+                    renderHistory(historyResponse || []);
+                });
             });
         }
     } catch (e) {
@@ -319,6 +331,54 @@ async function handleSaveSettings() {
     
     // Update statistics display
     updateTimeSavedDisplay();
+}
+
+async function handleClearHistory() {
+    // Show confirmation modal
+    elements.confirmationModal.classList.remove('hidden');
+}
+
+async function confirmClearHistory() {
+    try {
+        buttons.confirmClear.disabled = true;
+        buttons.confirmClear.textContent = 'Clearing...';
+        
+        const response = await chrome.runtime.sendMessage({ action: 'clearHistory' });
+        
+        if (response.success) {
+            // Hide modal
+            elements.confirmationModal.classList.add('hidden');
+            
+            // Clear the history list display
+            renderHistory([]);
+            
+            // Clear any currently displayed summary and reset to current video
+            resetToCurrentVideo();
+            resetToMessage();
+            
+            // Update time saved display
+            updateTimeSavedDisplay();
+            
+            // Show success feedback
+            buttons.clearHistory.textContent = 'Cleared!';
+            
+            setTimeout(() => {
+                buttons.clearHistory.textContent = 'Clear History';
+            }, 2000);
+        }
+    } catch (error) {
+        console.error('Error clearing history:', error);
+        buttons.confirmClear.textContent = 'Error clearing';
+        setTimeout(() => {
+            buttons.confirmClear.textContent = 'Clear All';
+        }, 2000);
+    } finally {
+        buttons.confirmClear.disabled = false;
+    }
+}
+
+function cancelClearHistory() {
+    elements.confirmationModal.classList.add('hidden');
 }
 
 // --- Helper Functions ---
@@ -361,8 +421,31 @@ async function initialize() {
     });
     buttons.back.addEventListener('click', () => showView(elements.mainView));
     buttons.saveSettings.addEventListener('click', handleSaveSettings);
-    buttons.history.addEventListener('click', () => showView(elements.historyView));
+    buttons.history.addEventListener('click', () => {
+        // Refresh history list when opening history view to ensure it's up to date
+        chrome.runtime.sendMessage({ action: 'getHistory' }, (response) => {
+            renderHistory(response || []);
+            showView(elements.historyView);
+        });
+    });
     buttons.backFromHistory.addEventListener('click', () => showView(elements.mainView));
+    buttons.clearHistory.addEventListener('click', handleClearHistory);
+    buttons.confirmClear.addEventListener('click', confirmClearHistory);
+    buttons.cancelClear.addEventListener('click', cancelClearHistory);
+
+    // Close modal when clicking overlay
+    elements.confirmationModal.addEventListener('click', (e) => {
+        if (e.target === elements.confirmationModal || e.target.classList.contains('modal-overlay')) {
+            cancelClearHistory();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !elements.confirmationModal.classList.contains('hidden')) {
+            cancelClearHistory();
+        }
+    });
 
     // Initialize current video tracking
     chrome.runtime.sendMessage({ action: 'getCurrentVideo' }, (response) => {

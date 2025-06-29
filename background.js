@@ -1,6 +1,8 @@
 // background.js
 
-const defaultSystemPrompt = `You are an expert AI assistant specializing in distilling YouTube video content into actionable insights for a viewer seeking specific solutions or understanding. Your output style is that of a high-value, concise newsletter: direct, factual, and focused on utility.
+const defaultSystemPrompt = `You are an expert AI assistant specializing in analyzing YouTube video content and distilling it into actionable insights. You have direct access to the video's audio and visual content, allowing you to provide accurate timestamps and comprehensive analysis.
+
+**CRITICAL: You are processing the actual video content. Provide ONLY accurate timestamps that correspond to real moments in the video where concepts are discussed. Do not guess or estimate timestamps.**
 
 **Output Format:**
 Respond strictly in JSON format. The JSON object must contain three keys:
@@ -12,38 +14,34 @@ Respond strictly in JSON format. The JSON object must contain three keys:
 -   **Core Focus:** Directly answer "What is the main point of this video?" and "Why is this main point important for me, the viewer, considering why I likely clicked on this specific video?"
 -   **Style & Opening:**
     *   Begin immediately with the video's core message or the primary problem it aims to solve. **Do not use introductory phrases** like "This video is about..." or "The video argues that..."
-    *   Use illustrative examples from the video (e.g., referencing a case study like "Dom Dolla" and specific strategies shown) to clarify the main point and teach the concepts directly as the video presents them.
-    *   Example phrasing for introducing content: "The core insight is that [main point], crucial for viewers wanting to [achieve X]. For instance, the video highlights how [Case Study subject like Dom Dolla] leverages [specific strategy] by..."
+    *   Use specific examples and details from the actual video content to clarify the main point and teach the concepts as presented.
+    *   Reference actual moments, demonstrations, case studies, or examples shown in the video.
 -   **Readability & Formatting:**
     *   Structure the summary into **2-4 concise paragraphs**. Explicitly use two newline characters ('\n\n') to separate these paragraphs for clear visual breaks.
     *   Use Markdown to **bold** 3-5 of the most important key terms or phrases within the summary that encapsulate core ideas. These bolded terms will be used for timestamping.
--   **Referencing Video Content:** When illustrating, use active phrasing (e.g., "the video demonstrates," "it shows how [X achieves Y]," or simply state the observation directly). Avoid "the speaker said."
--   **Tone:** Illustrative and insightful, yet concise overall.
+-   **Accuracy:** Base your summary on what you actually observe in the video content, not assumptions or general knowledge.
+-   **Tone:** Insightful and concise, focusing on practical value for the viewer.
 
 **Action Steps Requirements ('action_steps' field):**
--   **Tone**: Spartan, very direct, and imperative (command-oriented). Use short sentences.
--   **Quantity & Selection**: Identify and return **2-4 of the absolute most important, foundational, and impactful action steps** a viewer can take to implement the video's core teachings.
-    *   **Prioritization Criteria:** If many potential steps exist, select them based on:
-        a)  Being foundational (prerequisites or first key actions).
-        b)  Being explicitly emphasized or repeated in the video.
-        c)  Offering the most direct path for the viewer to achieve the video's core promised outcome.
--   **Instructional Nature ("How-To"):**
-    *   Frame as direct commands.
-    *   **Crucially, if the video provides specific methods, techniques, or 'how-to' details for a step, concisely include them.** Example: "Define your core identity: [Briefly state video's method, e.g., 'Analyze your top 3 influences and unique life experiences to identify your brand archetype']."
-    *   If the video is more conceptual without explicit 'how-to' for a given point, formulate the step as a clear directive to apply that principle.
--   **Filtering Marketing CTAs**: **Strictly exclude** any steps that are primarily marketing calls to action from the video creator (e.g., instructions to subscribe, like, comment on *their* video for a download, visit *their* specific sales page, or buy *their* exclusive product/service unless it's a generic tool that is central to the educational content and anyone can acquire/use). Focus on general principles and self-executable tasks derived from the video's educational content.
--   **No Search Links**: Do not append search suggestions or links to action steps.
--   If no genuinely actionable, non-promotional steps are present, return an empty array [].
+-   **Tone**: Direct and imperative (command-oriented). Use short sentences.
+-   **Quantity & Selection**: Identify and return **2-4 of the most important, actionable steps** a viewer can take based on what's actually demonstrated or explained in the video.
+-   **Specificity**: Include specific methods, techniques, or details that are actually shown or explained in the video content.
+-   **Filtering**: Exclude marketing calls-to-action or promotional content. Focus on educational value.
+-   If no genuinely actionable steps are present, return an empty array [].
 
 **Timestamped Concepts Requirements ('timestamped_concepts' field):**
--   **CRITICAL FOR LONGER VIDEOS:** Ensure timestamps are distributed throughout the ENTIRE video duration, not just the first 10-15 minutes. Pay special attention to concepts discussed in the middle and latter portions of the video.
+-   **ACCURACY IS CRITICAL**: Every timestamp MUST correspond to an actual moment in the video where that concept is discussed or demonstrated.
 -   **Primary Timestamps:** For **each of the phrases you bolded** in the 'summary' field:
-    *   Create an object: { "concept": "The exact bolded phrase from summary", "timestamp": "MM:SS" } (or "HH:MM:SS" if the video is long).
-    *   The 'timestamp' should point to the primary moment in the video where this concept is discussed or best illustrated.
--   **Additional Key Timestamps:** Beyond the bolded summary phrases, include 3-5 additional important concepts, methods, or insights from throughout the video with their timestamps, especially those from the latter half of longer videos.
--   **Distribution Requirement:** For videos longer than 20 minutes, ensure at least 30% of your timestamps come from the second half of the video. For videos longer than 40 minutes, ensure timestamps are spread across the beginning, middle, and end thirds.
--   **Accuracy:** If a precise timestamp for a concept cannot be confidently determined from the video, omit that specific concept from this array. Aim for accuracy over quantity.
--   **Format:** All timestamps must be in "MM:SS" format for videos under 1 hour, or "HH:MM:SS" format for longer videos.`;
+    *   Create an object: { "concept": "The exact bolded phrase from summary", "timestamp": "MM:SS" }
+    *   The 'timestamp' should point to the precise moment in the video where this concept is introduced or best explained.
+-   **Additional Key Timestamps:** Include 3-5 additional important concepts, methods, or insights from throughout the video with their accurate timestamps.
+-   **Distribution for Long Videos:** 
+    *   For videos longer than 20 minutes, ensure at least 30% of timestamps come from the second half.
+    *   For videos longer than 40 minutes, distribute timestamps across beginning, middle, and end.
+-   **Timestamp Format:** Use "MM:SS" format for videos under 1 hour, or "HH:MM:SS" format for longer videos.
+-   **Quality over Quantity:** Only include timestamps you can accurately identify from the video content. If you cannot determine an accurate timestamp for a concept, omit it.
+
+**Remember: You are analyzing the actual video content. Your timestamps must be precise and correspond to real moments in the video.**`;
 
 // Function to get data from storage
 function getStorageData(keys) {
@@ -90,16 +88,18 @@ async function generateSummary(videoDetails, customSystemPrompt) {
         additionalInstructions = '\n\n**LONG VIDEO NOTICE:** This video is longer than 1 hour. Please ensure your timestamps are distributed throughout the entire duration, with special attention to key concepts from the middle and end portions of the video. Include timestamps from at least the final third of the video.';
     }
 
-    const prompt = `
-        **Video Title:** ${videoDetails.title}
-        **Video URL:** https://www.youtube.com/watch?v=${videoDetails.videoId}${durationInfo}
+    const textPrompt = `
+        **Video Title:** ${videoDetails.title}${durationInfo}
 
         ${finalSystemPrompt}${additionalInstructions}
 
-        Process the video content and return the JSON output as specified.
-    `;
+        Process the video content and return the JSON output as specified. Pay special attention to providing accurate timestamps that correspond to the actual moments in the video where concepts are discussed.
+    `.trim();
+
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoDetails.videoId}`;
 
     try {
+        // Use the newer Gemini 2.5 Flash model with proper video input format
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
@@ -107,7 +107,16 @@ async function generateSummary(videoDetails, customSystemPrompt) {
             },
             body: JSON.stringify({
                 contents: [{
-                    parts: [{ text: prompt }]
+                    parts: [
+                        {
+                            file_data: {
+                                file_uri: youtubeUrl
+                            }
+                        },
+                        {
+                            text: textPrompt
+                        }
+                    ]
                 }],
                 generationConfig: {
                     response_mime_type: "application/json",
@@ -118,11 +127,11 @@ async function generateSummary(videoDetails, customSystemPrompt) {
         if (!response.ok) {
             const errorData = await response.json();
             console.error('API Error:', errorData);
-            return { error: `API Error: ${errorData.error.message}` };
+            return { error: `API Error: ${errorData.error?.message || 'Unknown error'}` };
         }
 
         const data = await response.json();
-        if (!data.candidates || !data.candidates[0].content.parts[0].text) {
+        if (!data.candidates || !data.candidates[0]?.content?.parts?.[0]?.text) {
             console.error('Invalid API response structure:', data);
             return { error: 'Invalid response structure from API.' };
         }
@@ -291,6 +300,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             if (history.length > 50) history.pop();
             
             await setStorageData({ summaryCache, history });
+            sendResponse({ success: true });
+        } else if (request.action === 'clearHistory') {
+            // Clear all history data and reset statistics
+            await setStorageData({
+                summaryCache: {},
+                history: [],
+                timeSaved: 0,
+                videosSummarized: 0
+            });
             sendResponse({ success: true });
         }
     })();

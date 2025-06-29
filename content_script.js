@@ -92,7 +92,7 @@
         sendResponse({ 
           videoId, 
           videoUrl, 
-          videoTitle, 
+          title: videoTitle.replace(' - YouTube', ''), 
           duration, 
           formattedDuration 
         });
