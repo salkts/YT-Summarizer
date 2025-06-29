@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Video Summarizer",
+  "name": "YT Summarizer",
   "version": "1.0",
-  "description": "Summarizes YouTube videos using the Gemini API.",
+  "description": "The ONLY YouTube summarizer with precise video analysis, clickable timestamps, and actionable insights. Privacy-first.",
   "permissions": [
     "storage",
     "activeTab",
