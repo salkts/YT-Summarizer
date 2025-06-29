@@ -12,10 +12,12 @@ const elements = {
     errorContainer: document.getElementById('error-container'),
     historyBanner: document.getElementById('history-banner'),
     confirmationModal: document.getElementById('confirmation-modal'),
+    promptWarningModal: document.getElementById('prompt-warning-modal'),
     
     message: document.getElementById('message'),
     summaryText: document.getElementById('summary-text'),
     videoDuration: document.getElementById('video-duration'),
+    videoLink: document.getElementById('video-link'),
     actionStepsList: document.getElementById('action-steps-list'),
     conceptsList: document.getElementById('concepts-list'),
     conceptsContainer: document.getElementById('concepts-container'),
@@ -24,6 +26,7 @@ const elements = {
     
     apiKeyInput: document.getElementById('api-key'),
     systemPromptInput: document.getElementById('system-prompt'),
+    promptReadonlyNotice: document.getElementById('prompt-readonly-notice'),
     saveConfirm: document.getElementById('save-confirm'),
     timeSavedText: document.getElementById('time-saved-text'),
     statsTimeSaved: document.getElementById('stats-time-saved'),
@@ -44,7 +47,10 @@ const buttons = {
     themeToggle: document.getElementById('theme-toggle-btn'),
     clearHistory: document.getElementById('clear-history-btn'),
     cancelClear: document.getElementById('cancel-clear-btn'),
-    confirmClear: document.getElementById('confirm-clear-btn')
+    confirmClear: document.getElementById('confirm-clear-btn'),
+    resetPrompt: document.getElementById('reset-prompt-btn'),
+    cancelPromptEdit: document.getElementById('cancel-prompt-edit-btn'),
+    confirmPromptEdit: document.getElementById('confirm-prompt-edit-btn')
 };
 
 // Track both the actual current video and the displayed video (for history viewing)
@@ -193,11 +199,16 @@ function renderSummary(data, isFromHistory = false) {
         elements.conceptsContainer.classList.add('hidden');
     }
 
-    // Show/hide history banner
+    // Show/hide history banner and video link
     if (isViewingHistory && actualCurrentVideoId !== displayedVideoId) {
         elements.historyBanner.classList.remove('hidden');
+        // Show video link for history items
+        elements.videoLink.href = `https://www.youtube.com/watch?v=${displayedVideoId}`;
+        elements.videoLink.classList.remove('hidden');
     } else {
         elements.historyBanner.classList.add('hidden');
+        // Hide video link for current video
+        elements.videoLink.classList.add('hidden');
     }
 
     elements.messageContainer.classList.add('hidden');
@@ -381,6 +392,91 @@ function cancelClearHistory() {
     elements.confirmationModal.classList.add('hidden');
 }
 
+async function handleResetPrompt() {
+    try {
+        // Get the default system prompt from background script
+        const response = await chrome.runtime.sendMessage({ action: 'getDefaultPrompt' });
+        if (response && response.defaultPrompt) {
+            elements.systemPromptInput.value = response.defaultPrompt;
+            
+            // Show brief feedback
+            const originalText = buttons.resetPrompt.innerHTML;
+            buttons.resetPrompt.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg>
+                Reset
+            `;
+            
+            setTimeout(() => {
+                buttons.resetPrompt.innerHTML = originalText;
+            }, 1500);
+        }
+    } catch (error) {
+        console.error('Error resetting prompt:', error);
+    }
+}
+
+async function handlePromptClick() {
+    // Don't show modal if textarea is already editable
+    if (!elements.systemPromptInput.hasAttribute('readonly')) {
+        return;
+    }
+    
+    try {
+        // Check if user has already confirmed prompt editing
+        const settings = await getSettings();
+        const hasConfirmedPromptEdit = settings.hasConfirmedPromptEdit || false;
+        
+        if (!hasConfirmedPromptEdit) {
+            // Show warning modal
+            elements.promptWarningModal.classList.remove('hidden');
+        } else {
+            // Already confirmed, enable editing
+            enablePromptEditing();
+        }
+    } catch (error) {
+        console.error('Error in handlePromptClick:', error);
+    }
+}
+
+function cancelPromptEdit() {
+    if (elements.promptWarningModal) {
+        elements.promptWarningModal.classList.add('hidden');
+    }
+}
+
+async function confirmPromptEdit() {
+    try {
+        // Save confirmation to storage first
+        const settings = await getSettings();
+        const response = await new Promise((resolve) => {
+            chrome.runtime.sendMessage({
+                action: 'saveSettings',
+                settings: { ...settings, hasConfirmedPromptEdit: true }
+            }, resolve);
+        });
+        
+        if (response && response.success) {
+            // Only proceed if save was successful
+            elements.promptWarningModal.classList.add('hidden');
+            enablePromptEditing();
+        } else {
+            console.error('Failed to save prompt edit confirmation');
+        }
+    } catch (error) {
+        console.error('Error confirming prompt edit:', error);
+    }
+}
+
+function enablePromptEditing() {
+    if (elements.systemPromptInput) {
+        elements.systemPromptInput.removeAttribute('readonly');
+        elements.systemPromptInput.focus();
+    }
+    if (elements.promptReadonlyNotice) {
+        elements.promptReadonlyNotice.style.display = 'none';
+    }
+}
+
 // --- Helper Functions ---
 
 function getSettings() {
@@ -399,9 +495,25 @@ function parseTimestamp(timestamp) {
 }
 
 async function loadSettings() {
-    const settings = await getSettings();
-    elements.apiKeyInput.value = settings.apiKey || '';
-    elements.systemPromptInput.value = settings.systemPrompt || '';
+    try {
+        const settings = await getSettings();
+        
+        elements.apiKeyInput.value = settings.apiKey || '';
+        elements.systemPromptInput.value = settings.systemPrompt || '';
+        
+        // Check if user has already confirmed prompt editing
+        if (settings.hasConfirmedPromptEdit) {
+            enablePromptEditing();
+        } else {
+            // Ensure textarea is readonly and notice is visible
+            elements.systemPromptInput.setAttribute('readonly', 'readonly');
+            if (elements.promptReadonlyNotice) {
+                elements.promptReadonlyNotice.style.display = 'flex';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading settings:', error);
+    }
 }
 
 // --- Initialization ---
@@ -432,6 +544,13 @@ async function initialize() {
     buttons.clearHistory.addEventListener('click', handleClearHistory);
     buttons.confirmClear.addEventListener('click', confirmClearHistory);
     buttons.cancelClear.addEventListener('click', cancelClearHistory);
+    buttons.resetPrompt.addEventListener('click', handleResetPrompt);
+    buttons.cancelPromptEdit.addEventListener('click', cancelPromptEdit);
+    buttons.confirmPromptEdit.addEventListener('click', confirmPromptEdit);
+
+    // System prompt click handler
+    elements.systemPromptInput.addEventListener('click', handlePromptClick);
+    elements.systemPromptInput.addEventListener('focus', handlePromptClick);
 
     // Close modal when clicking overlay
     elements.confirmationModal.addEventListener('click', (e) => {
@@ -440,10 +559,21 @@ async function initialize() {
         }
     });
 
+    // Close prompt warning modal when clicking overlay
+    elements.promptWarningModal.addEventListener('click', (e) => {
+        if (e.target === elements.promptWarningModal || e.target.classList.contains('modal-overlay')) {
+            cancelPromptEdit();
+        }
+    });
+
     // Close modal with Escape key
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !elements.confirmationModal.classList.contains('hidden')) {
-            cancelClearHistory();
+        if (e.key === 'Escape') {
+            if (!elements.confirmationModal.classList.contains('hidden')) {
+                cancelClearHistory();
+            } else if (!elements.promptWarningModal.classList.contains('hidden')) {
+                cancelPromptEdit();
+            }
         }
     });
 

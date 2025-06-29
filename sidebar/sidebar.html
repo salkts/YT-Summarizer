@@ -52,6 +52,10 @@
                 <h2 class="card-title">Summary</h2>
                 <div class="summary-actions">
                   <span id="video-duration" class="video-info"></span>
+                  <a id="video-link" class="video-link hidden" target="_blank" title="Go to Video">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-small"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15,3 21,3 21,9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    Go to Video
+                  </a>
                   <button id="regenerate-btn" class="btn-icon" title="Regenerate Summary"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg></button>
                 </div>
             </div>
@@ -120,8 +124,22 @@
         <div class="card">
             <div class="card-content">
                 <div class="form-group">
-                    <label for="system-prompt">System Prompt</label>
-                    <textarea id="system-prompt" class="form-textarea" rows="8"></textarea>
+                    <div class="label-with-reset">
+                        <label for="system-prompt">System Prompt</label>
+                        <button id="reset-prompt-btn" class="btn-reset" title="Reset to Default">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Reset
+                        </button>
+                    </div>
+                    <textarea id="system-prompt" class="form-textarea" rows="8" readonly></textarea>
+                    <div id="prompt-readonly-notice" class="prompt-notice">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="notice-icon">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Click to modify the system prompt (advanced users only)
+                    </div>
                     <small class="help-text">Customize how the AI analyzes and summarizes videos</small>
                 </div>
             </div>
@@ -164,6 +182,37 @@
         <div class="modal-actions">
           <button id="cancel-clear-btn" class="btn btn-secondary">Cancel</button>
           <button id="confirm-clear-btn" class="btn btn-primary">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System Prompt Warning Modal -->
+    <div id="prompt-warning-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: inline; margin-right: 8px; vertical-align: middle;">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            Advanced Feature Warning
+          </h3>
+        </div>
+        <div class="modal-body">
+          <p><strong>You're about to modify the system prompt that controls how the AI analyzes videos.</strong></p>
+          <p>This is an advanced feature that can significantly change how summaries are generated. Incorrect modifications may result in:</p>
+          <ul class="warning-list">
+            <li>Poor quality summaries</li>
+            <li>Missing timestamps or action steps</li>
+            <li>Incorrect JSON formatting leading to errors</li>
+          </ul>
+          <p class="modal-warning">Only proceed if you understand how AI prompts work and are comfortable troubleshooting issues.</p>
+        </div>
+        <div class="modal-actions">
+          <button id="cancel-prompt-edit-btn" class="btn btn-secondary">Cancel</button>
+          <button id="confirm-prompt-edit-btn" class="btn btn-primary">I Understand, Continue</button>
         </div>
       </div>
     </div>

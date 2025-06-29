@@ -258,15 +258,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             await setStorageData({
                 apiKey: request.settings.apiKey,
                 systemPrompt: request.settings.systemPrompt,
-                theme: request.settings.theme
+                theme: request.settings.theme,
+                hasConfirmedPromptEdit: request.settings.hasConfirmedPromptEdit
             });
             sendResponse({ success: true });
         } else if (request.action === 'getSettings') {
-            const { apiKey, systemPrompt, theme } = await getStorageData(['apiKey', 'systemPrompt', 'theme']);
+            const { apiKey, systemPrompt, theme, hasConfirmedPromptEdit } = await getStorageData(['apiKey', 'systemPrompt', 'theme', 'hasConfirmedPromptEdit']);
             sendResponse({
                 apiKey: apiKey || '',
                 systemPrompt: systemPrompt || defaultSystemPrompt,
-                theme: theme || 'dark'
+                theme: theme || 'dark',
+                hasConfirmedPromptEdit: hasConfirmedPromptEdit || false
             });
         } else if (request.action === 'getTimeSaved') {
             const { timeSaved = 0, videosSummarized = 0 } = await getStorageData(['timeSaved', 'videosSummarized']);
@@ -310,6 +312,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 videosSummarized: 0
             });
             sendResponse({ success: true });
+        } else if (request.action === 'getDefaultPrompt') {
+            sendResponse({ defaultPrompt: defaultSystemPrompt });
         }
     })();
     return true; // Indicates that the response is sent asynchronously
